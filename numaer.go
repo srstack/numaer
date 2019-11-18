@@ -95,7 +95,7 @@ func NumNode() (int, error) {
 
 
 // ZoneInfo 获取内存节点 node 的区域信息
-func ZoneInfo(n *Node) ([]*Zone, error) {
+func (n *Node)ZoneInfo() ([]*Zone, error) {
 
 	f, err := os.Open("/proc/zoneinfo")
 	// zoneinfo 文件包含了zone 相关信息
@@ -181,12 +181,12 @@ func ZoneInfo(n *Node) ([]*Zone, error) {
 }
 
 // CPUInfo 获取内存节点 Node 绑定的CPU信息
-func CPUInfo(n *Node) ([]*CPU, error) {
+func (n *Node)CPUInfo() ([]*CPU, error) {
 	return nil,nil
 }
 
 // BuddyInfo ：伙伴系统当前状态
-func BuddyInfo(z *Zone) (map[int]int64, error) {// [11中内存碎片大小]剩余碎片数
+func (z *Zone)BuddyInfo() (map[int]int64, error) {// [11中内存碎片大小]剩余碎片数
 
 	NodeName := z.Node.Name
 	ZoneType := z.Type
