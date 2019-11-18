@@ -28,13 +28,6 @@ type CPU struct {
 	Node Node
 }
 
-// init 初始化 numaer库函数
-func init() {
-	if !IsNUMA(){
-		fmt.Println("OS is not NUMA")
-	}
-}
-
 // IsNUMA  判断是否为 NUMA 架构
 func IsNUMA() bool {
 	if _, err := os.Stat("/proc/zoneinfo"); !os.IsNotExist(err) {
