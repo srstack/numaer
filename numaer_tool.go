@@ -2,7 +2,7 @@ package numaer
 
 
 // RemoveReplicaSliceString 切片去重
-func RemoveReplicaSliceString(srcSlice []string) []string {
+func removeReplicaSliceString(srcSlice []string) []string {
  
 	resultSlice := make([]string, 0)
 	// 利用map key 值唯一去重
@@ -18,7 +18,7 @@ func RemoveReplicaSliceString(srcSlice []string) []string {
 
 
 // RemoveNullSliceString : 删除空白字符的元素
-func RemoveNullSliceString(srcSlice []string) []string {
+func removeNullSliceString(srcSlice []string) []string {
  
 	resultSlice := make([]string, 0)
 

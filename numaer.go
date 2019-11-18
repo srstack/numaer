@@ -69,7 +69,7 @@ func Nodes() ([]*Node, error) {
 	}
 
 	// 去重
-	NUMANodeSlice = RemoveReplicaSliceString(NUMANodeSlice)
+	NUMANodeSlice = removeReplicaSliceString(NUMANodeSlice)
 
 	var Nodes []*Node
 	
@@ -142,7 +142,7 @@ func ZoneInfo(n *Node) ([]*Zone, error) {
 		txt := scanner.Text()
 		txt = strings.TrimSpace(txt) //去除首尾空格
 		fields := strings.Split(txt, " ") // 以  空格 切片 Node 0, zone DMA
-		fields = RemoveNullSliceString(fields)
+		fields = removeNullSliceString(fields)
 
 		// 关于 page free 的条目一般都在 Zone 信息后一排
 		// 在上一行信息中获取到了 Zone 信息，保存 temZoneType 中，并设置 pageTag = true
@@ -211,7 +211,7 @@ func BuddyInfo(z *Zone) (map[int]int64, error) {// [11中内存碎片大小]剩�
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		txt := scanner.Text()
-		buddySlice := RemoveNullSliceString(strings.Split(txt, " "))
+		buddySlice := removeNullSliceString(strings.Split(txt, " "))
 		// 判断相关信息
 		if (buddySlice[0] + buddySlice[1]) == (NodeName + ",") && buddySlice[2] == "zone" && buddySlice[3] == ZoneType {
 			for index, v := range buddySlice[4:] {
