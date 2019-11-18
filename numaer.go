@@ -11,21 +11,20 @@ import (
 // Node ： NUMA Node 节点信息
 type Node struct {
 	Name string
-	Zone []Zone
-	CPU  []CPU
 }
 
 // Zone NUMA  zone 区域信息
 type Zone struct {
 	Type string
-	Node Node
+	FreePage int
+	Node *Node
 }
 
 // CPU 相关信息
 type CPU struct {
 	//core id	
 	ID int
-	Node Node
+	Node *Node
 }
 
 // IsNUMA  判断是否为 NUMA 架构
@@ -37,7 +36,7 @@ func IsNUMA() bool {
 }
 
 // Nodes 获取当前系统 内存节点 node 信息
-func Nodes() ([]Node, error) {
+func Nodes() ([]*Node, error) {
 	if !IsNUMA() {
 		return nil, fmt.Errorf("OS is not NUMA")
 	}
@@ -59,8 +58,6 @@ func Nodes() ([]Node, error) {
 
 	// NewScanner创建并返回一个从f读取数据的Scanner，默认的分割函数是ScanLines
 	scanner := bufio.NewScanner(f)
-	// Scan方法获取当前位置的token（该token可以通过Bytes或Text方法获得），并让Scanner的扫描位置移动到下一个token。
-	// 当扫描因为抵达输入流结尾或者遇到错误而停止时，本方法会返回false
 	for scanner.Scan() {
 		txt := scanner.Text()
 		fields := strings.Split(txt, ",") // 以,切片
@@ -74,10 +71,10 @@ func Nodes() ([]Node, error) {
 	// 去重
 	NUMANodeSlice = RemoveReplicaSliceString(NUMANodeSlice)
 
-	var Nodes []Node
+	var Nodes []*Node
 	
 	for _, NodeName := range NUMANodeSlice {
-		Nodes = append(Nodes, Node{
+		Nodes = append(Nodes, &Node{
 			Name: NodeName,
 		})
 	}
@@ -98,13 +95,93 @@ func NumNode() (int, error) {
 
 
 // ZoneInfo 获取内存节点 node 的区域信息
-func ZoneInfo(n *Node) ([]Zone, error) {
+func ZoneInfo(n *Node) ([]*Zone, error) {
 
-	return nil,nil
+	f, err := os.Open("/proc/zoneinfo")
+	// zoneinfo 文件包含了zone 相关信息
+	// 如：
+	/*
+	Node 0, zone      DMA
+	 pages free     3969 
+	...
+	  pagesets
+        cpu: 0
+              count: 0
+              high:  0
+              batch: 1
+  		vm stats threshold: 8
+    	cpu: 1
+              count: 0
+              high:  0
+              batch: 1
+  		vm stats threshold: 8
+    	cpu: 2
+              count: 0
+              high:  0
+              batch: 1
+  		vm stats threshold: 8
+    	cpu: 3
+              count: 0
+              high:  0
+              batch: 1
+	*/
+
+	if err != nil {
+		return nil, fmt.Errorf("err : %v", err)
+	}
+	defer f.Close()
+
+	var ZoneSlice []*Zone
+
+	pageTag := false
+	var tmpZoneType string
+
+	// NewScanner创建并返回一个从f读取数据的Scanner，默认的分割函数是ScanLines
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		txt := scanner.Text()
+		txt = strings.TrimSpace(txt) //去除首尾空格
+		fields := strings.Split(txt, " ") // 以  空格 切片 Node 0, zone DMA
+		fields = RemoveNullSliceString(fields)
+
+		// 关于 page free 的条目一般都在 Zone 信息后一排
+		// 在上一行信息中获取到了 Zone 信息，保存 temZoneType 中，并设置 pageTag = true
+		if pageTag && fields[0] == "pages" && fields[1] == "free" {   //pages free 969
+
+			pagefree, err := strconv.Atoi(fields[2])
+
+			// 异常则设置为0
+			if err != nil {
+				pagefree = 0
+			}
+
+			ZoneSlice = append(ZoneSlice, &Zone{
+				Type: tmpZoneType,
+				Node: n,
+				FreePage: pagefree, 
+			})
+			// 设置  pageTag = false
+			pageTag = false
+			// 跳过本次循环
+			continue
+		}
+
+		// Node 0, zone DMA 
+		if fields[0] + fields[1] == n.Name + "," && fields[2] == "zone" {
+			tmpZoneType = fields[3]
+			pageTag = true
+		}
+		
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("err : %v", err)
+	}
+	return ZoneSlice, nil
 }
 
 // CPUInfo 获取内存节点 Node 绑定的CPU信息
-func CPUInfo(n *Node) ([]CPU, error) {
+func CPUInfo(n *Node) ([]*CPU, error) {
 	return nil,nil
 }
 
@@ -132,9 +209,6 @@ func BuddyInfo(z *Zone) (map[int]int64, error) {// [11中内存碎片大小]剩�
 
 	// NewScanner创建并返回一个从f读取数据的Scanner，默认的分割函数是ScanLines
 	scanner := bufio.NewScanner(f)
-	// Scan方法获取当前位置的token（该token可以通过Bytes或Text方法获得），并让Scanner的扫描位置移动到下一个token。
-	// 当扫描因为抵达输入流结尾或者遇到错误而停止时，本方法会返回false
-	// 简单理解就是一行一行读取
 	for scanner.Scan() {
 		txt := scanner.Text()
 		buddySlice := RemoveNullSliceString(strings.Split(txt, " "))
