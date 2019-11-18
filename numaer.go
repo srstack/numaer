@@ -1,4 +1,4 @@
-package numa
+package numaer
 
 import (
 	"bufio"
@@ -26,6 +26,13 @@ type Zone struct {
 type CPU struct {
 	ID int
 	Node Node
+}
+
+// init 初始化 numaer库函数
+func init() {
+	if !IsNUMA(){
+		fmt.Println("OS is not NUMA")
+	}
 }
 
 // IsNUMA  判断是否为 NUMA 架构
@@ -87,10 +94,6 @@ func Nodes() ([]Node, error) {
 
 // NumNode ：获取当前系统 NUMA 数量
 func NumNode() (int, error) {
-	
-	if !IsNUMA() {
-		return 0, fmt.Errorf("OS is not NUMA")
-	}
 
 	// 获取当前系统参数
 	if NodeSlice, err := Nodes(); err == nil {
@@ -114,10 +117,6 @@ func CPUInfo(n *Node) ([]CPU, error) {
 
 // BuddyInfo ：伙伴系统当前状态
 func BuddyInfo(z *Zone) (map[int]int64, error) {// [11中内存碎片大小]剩余碎片数
-
-	if !IsNUMA() {
-		return nil, fmt.Errorf("OS is not NUMA")
-	}
 
 	NodeName := z.Node.Name
 	ZoneType := z.Type
