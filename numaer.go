@@ -146,7 +146,7 @@ func ZoneInfo(n *Node) ([]*Zone, error) {
 
 		// 关于 page free 的条目一般都在 Zone 信息后一排
 		// 在上一行信息中获取到了 Zone 信息，保存 temZoneType 中，并设置 pageTag = true
-		if pageTag && fields[0] == "pages" && fields[1] == "free" {   //pages free 969
+		if pageTag && len(fields) >= 3 && fields[0] == "pages" && fields[1] == "free" {   //pages free 969
 
 			pagefree, err := strconv.Atoi(fields[2])
 
@@ -167,7 +167,7 @@ func ZoneInfo(n *Node) ([]*Zone, error) {
 		}
 
 		// Node 0, zone DMA 
-		if fields[0] + fields[1] == n.Name + "," && fields[2] == "zone" {
+		if len(fields) >= 4 && fields[0] + fields[1] == n.Name + "," && fields[2] == "zone" {
 			tmpZoneType = fields[3]
 			pageTag = true
 		}
