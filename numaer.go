@@ -61,7 +61,7 @@ func Nodes() ([]*Node, error) {
 	for scanner.Scan() {
 		txt := scanner.Text()
 		fields := strings.Split(txt, ",") // 以,切片
-		NUMANodeSlice = append(NUMANodeSlice, fields[0])
+		NUMANodeSlice = append(NUMANodeSlice, strings.Replace(fields[0], " ", "", -1)) // Node 0 > Node0
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -216,7 +216,7 @@ func (z *Zone)BuddyInfo() (map[int]int64, error) {// [11中内存碎片大小]�
 		if (buddySlice[0] + buddySlice[1]) == (NodeName + ",") && buddySlice[2] == "zone" && buddySlice[3] == ZoneType {
 			for index, v := range buddySlice[4:] {
 				vv, _ := strconv.ParseInt(v, 10, 64)
-				k := 0
+				k := 1
 				if index == 0 {
 					buddyMap[k] = vv
 				} else {
