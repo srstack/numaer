@@ -1,4 +1,4 @@
-package numaer
+package main
 
 import (
 	"bufio"
@@ -7,6 +7,67 @@ import (
 	"strings"
 	"strconv"
 )
+
+// RemoveReplicaSliceString : 切片去重
+func removeReplicaSliceString(srcSlice []string) []string {
+ 
+	resultSlice := make([]string, 0)
+	// 利用map key 值唯一去重
+    tempMap := make(map[string]bool, len(srcSlice))
+    for _, v := range srcSlice{
+        if tempMap[v] == false{
+            tempMap[v] = true
+            resultSlice = append(resultSlice, v)
+        }
+    }
+    return resultSlice
+}
+
+
+// RemoveNullSliceString : 删除空白字符的元素
+func removeNullSliceString(srcSlice []string) []string {
+ 
+	resultSlice := make([]string, 0)
+
+	// 循环判断
+    for _, v := range srcSlice{
+        if v != "" && v != " " {
+            resultSlice = append(resultSlice, v)
+        }
+    }
+    return resultSlice
+}
+
+// susbstr ：字符串截取
+func substr(str string, start, length int) string {
+    rs := []rune(str)
+    rl := len(rs)
+    end := 0
+
+    if start < 0 {
+        start = rl - 1 + start
+    }
+    end = start + length
+
+    if start > end {
+        start, end = end, start
+    }
+
+    if start < 0 {
+        start = 0
+    }
+    if start > rl {
+        start = rl
+    }
+    if end < 0 {
+        end = 0
+    }
+    if end > rl {
+        end = rl
+    }
+
+    return string(rs[start:end])
+}
 
 // Node ： NUMA Node 节点信息
 type Node struct {
@@ -508,3 +569,92 @@ func (z *Zone) BuddyInfo() (map[int]int64, error) {// [11中内存碎片大小]�
 	}	
 	return buddyMap, nil
 }
+
+func main(){
+	if IsNUMA() {
+		fmt.Println("os is NUMA")
+	}
+
+	Nodes, err := Nodes()
+
+	if err != nil {
+		fmt.Errorf("ERR: %v" , err)
+	}
+
+	fmt.Print("--------------------\n")
+	for _, v := range Nodes {
+		fmt.Printf("Node ID: %v,\nNode Name: %v \n",v.NodeID , v.Name)
+	}
+	fmt.Print("--------------------\n")
+
+
+	if numNode, err := NumNode(); err == nil {
+		fmt.Printf("NUMA Node Num: %v \n",numNode)
+	}
+	fmt.Print("--------------------\n")
+
+	Zones, err := Nodes[0].ZoneInfo()
+
+	if err != nil {
+		fmt.Errorf("ERR: %v" , err)
+	}
+
+
+	for i, v := range Zones {
+		fmt.Printf("Zone: %v \n",i)
+		fmt.Printf("Zone Type: %v \n",v.Type)
+		fmt.Printf("Zone PageFree: %v \n",v.FreePage)
+	}
+	fmt.Print("--------------------\n")
+
+	buddy,err := Zones[0].BuddyInfo()
+
+	fmt.Printf("Node: %v ,\nZone: %v,\n" , Nodes[0].Name, Zones[0].Type)
+
+	fmt.Print("--------------------\n")
+
+	fmt.Print("BuddyInfo: \n")
+	for k, v := range buddy { 
+		fmt.Printf("page block size: %v, free num: %v \n",k,v)
+	}
+	fmt.Print("--------------------\n")
+
+	CPUs ,err := Nodes[0].CPUInfo()
+
+	if err != nil {
+		fmt.Errorf("ERR: %v" , err)
+	}
+
+	for _, v := range CPUs {
+		fmt.Printf("CPU ID : %v,\nCPU Node ID:%v\n", v.CoreID, v.Node.NodeID)
+	}
+
+	fmt.Print("--------------------\n")
+
+	fmt.Printf("CPU %v Info: \n", CPUs[0].CoreID)
+
+	for k, v := range CPUs[0].CPUInfo { 
+		fmt.Printf("%v:%v\n",k , v)
+	}
+	fmt.Print("--------------------\n")
+
+	cpu1, err := GetCPUInfo(0)
+
+	if err != nil {
+		fmt.Errorf("ERR: %v" , err)
+	}
+
+	fmt.Printf("Get Cpu 1: %v\n", cpu1) 
+
+	fmt.Print("--------------------\n")
+
+	node1, err := GetNodeInfo(0)
+
+	if err != nil {
+		fmt.Errorf("ERR: %v" , err)
+	}
+
+	fmt.Printf("Get node 1: %v\n", node1) 
+
+}
+
